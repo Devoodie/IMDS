@@ -4,6 +4,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 import json
 import string
 driver = webdriver.Chrome()
@@ -11,11 +12,10 @@ wait = WebDriverWait(driver, 10)
 jobids = []
 
 
-def jobcloser():
-    job = ""
+def jobcloser(htmlele, tonumber):
     windows = driver.window_handles
-    wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/form/span/pre/a[1]')))
-    element = driver.find_element(By.XPATH, '/html/body/form/span/pre/a[1]')
+    wait.until(EC.element_to_be_clickable(htmlele))
+    element = driver.find_element(htmlele)
     if "A" in element.text or "R" in element.text:
         element.click()
         wait.until(EC.new_window_is_opened(windows))
@@ -25,20 +25,60 @@ def jobcloser():
         element = driver.find_element(By.XPATH, '/html/body/form/span/pre/a')
         element.click()
         element = driver.find_element(By.XPATH, '/html/body/form/span/pre')
-        starting_point = element.text.find("SCHEDULED") + 10
-        iterable = 0
-        while True:
-            character = element.text[starting_point+iterable]
-            if character in string.digits:
-                iterable += 1
-            else:
-                jobidee = iterable + starting_point
-                job = element.text[starting_point:jobidee]
-                break
-        driver.close()
-        windows = driver.window_handles
-        driver.switch_to.window(windows[0])
-
+        if f'-{tonumber}' in element.text or tonumber is True:
+            starting_point = element.text.find("SCHEDULED") + 10
+            iterable = 0
+            while True:
+                character = element.text[starting_point+iterable]
+                if character in string.digits:
+                    iterable += 1
+                else:
+                    jobidee = iterable + starting_point
+                    job = element.text[starting_point:jobidee]
+                    break
+            driver.close()
+            windows = driver.window_handles
+            driver.switch_to.window(windows[0])
+            wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[2]')))
+            try:   # time start
+                driver.find_element(By.NAME, 'R7_C29_L4_N').is_displayed()
+                driver.find_element(By.NAME, 'R7_C29_L4_N').send_keys(Timestart)
+            except NoSuchElementException:
+                wait.until(EC.element_to_be_clickable((By.NAME, 'R9_C33_L4_N')))
+                driver.find_element(By.NAME, 'R9_C33_L4_N').send_keys(Timestart)
+            try:  # time end
+                driver.find_element(By.NAME, 'R9_C45_L4_N').send_keys(Timeend)
+            except NoSuchElementException:
+                driver.find_element(By.NAME, 'R7_C42_L4_N').send_keys(Timeend)
+            try:  # type maintenance
+                if driver.find_element(By.NAME, 'R7_C1_L1_N').is_displayed():  # type maintenance
+                    driver.find_element(By.NAME, 'R7_C1_L1_N').send_keys("T")
+            except NoSuchElementException:
+                pass
+            driver.find_element(By.NAME, 'cs').send_keys("2")  # crew size
+            try:  # units produced
+                driver.find_element(By.NAME, 'R7_C25_L2_N').send_keys("1")
+            except NoSuchElementException:
+                driver.find_element(By.NAME, 'R9_C30_L2_N').send_keys("1")
+            driver.find_element(By.NAME, 'cat').send_keys("1")  # category
+            try:  # corrected by
+                if driver.find_element(By.NAME, 'R7_C62_L12_N').is_enabled():
+                    driver.find_element(By.NAME, 'R7_C62_L12_N').send_keys(FriendID)
+            except NoSuchElementException:
+                if driver.find_element(By.NAME, 'R9_C61_L12_N').is_enabled():
+                    driver.find_element(By.NAME, 'R9_C61_L12_N').send_keys(FriendID)
+            try:  # inspected by
+                driver.find_element(By.NAME, 'R19_C43_L12_N').send_keys(UserID)
+            except NoSuchElementException:
+                driver.find_element(By.NAME, 'R9_C22_L12_N').send_keys(UserID)
+            element = driver.find_element(By.NAME, 'CANarrativeTextarea')  # corrective action
+            element.clear()
+            element.send_keys(CorrectiveAction)
+            try:
+                driver.find_element(By.NAME, 'rad1').click()
+            except NoSuchElementException:
+                pass
+            return job
 
 
 def main():
@@ -72,6 +112,7 @@ def main():
     elem.click()  # New page
     driver.switch_to.default_content()
     wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[2]')))
+    wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/form/table[4]/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/input[1]')))
     elem = driver.find_element(By.XPATH, '/html/body/div[1]/form/table[4]/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/input[1]')
     elem.send_keys(EquipID)
     elem = driver.find_element(By.XPATH, '/html/body/div[1]/form/table[4]/tbody/tr/td[1]/table/tbody/tr[2]/td[4]/input[1]')
@@ -85,7 +126,8 @@ def main():
     driver.switch_to.window(windownames[1])
     wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "gagtext")))
     iterjobs = driver.find_elements(By.CLASS_NAME, "gagtext")
-    jobcloser()
+    for eluhment in iterjobs:
+        jobcloser(eluhment, 642)
     print(windownames)
     print(iterjobs)
     input()
@@ -93,6 +135,11 @@ def main():
 
 if __name__ == '__main__':
     TerminalID = 'M2LDAZ'
+    UserID = "COLEYDA"
     FriendID = 'SACKEYAN'
     EquipID = 'C120T'
+    Timestart = "0730"
+    Timeend = "0930"
+    CorrectiveAction = "asdadasdasasd"
+    jobstoautomate = []
     main()
