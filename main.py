@@ -44,7 +44,6 @@ def logic():
     elem.send_keys(EquipID)
     elem = driver.find_element(By.XPATH, '/html/body/div[1]/form/table[4]/tbody/tr/td[1]/table/tbody/tr[2]/td[4]/input[1]')
     elem.send_keys("52NO")
-    elem.
     input()
 
 
