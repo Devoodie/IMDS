@@ -31,8 +31,10 @@ def logic():
     elem.send_keys(Keys.ENTER)  # New Page
     driver.switch_to.default_content()
     wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div/iframe[3]')))
-    elem = driver.find_element(By.ID, 'R0_C0_L0_Y')
-    driver.switch_to.default_content()
+    wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[2]/td[3]/input[1]')))
+    elem = driver.find_element(By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[2]/td[3]/input[1]')
+    elem.click()
+    print("Element is visible? " + str(elem.is_displayed()))
     elem.send_keys("380")
     elem = driver.find_element(By.XPATH, '//*[@id="div1"]/table[1]/tbody/tr[2]/td[3]/input[4]')
     elem.click()  # New page
@@ -41,7 +43,8 @@ def logic():
     elem = driver.find_element(By.XPATH, '/html/body/div[1]/form/table[4]/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/input[1]')
     elem.send_keys(EquipID)
     elem = driver.find_element(By.XPATH, '/html/body/div[1]/form/table[4]/tbody/tr/td[1]/table/tbody/tr[2]/td[4]/input[1]')
-    elem.send_keys()
+    elem.send_keys("52NO")
+    elem.
     input()
 
 
