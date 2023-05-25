@@ -281,7 +281,7 @@ if __name__ == '__main__':
     TerminalID = 'M2LDAZ'
     UserID = "COLEYDA"
     FriendID = 'SACKEYAN'
-    EquipID = 'C120T'
+    EquipID = 'C128T'
     Timestart = "0730"
     Timeend = "0930"
     CorrectiveAction = "asdadasdasasd"
