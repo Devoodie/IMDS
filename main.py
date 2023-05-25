@@ -104,7 +104,7 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
             driver.find_element(By.NAME, "b1").click()
             driver.switch_to.default_content()
             wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[3]')))
-            wait.until(EC.presence_of_element_located(driver.find_element(By.ID, 'ErrorField').text))
+            wait.until(EC.presence_of_element_located((By.ID, 'ErrorField')))
             if driver.find_element(By.ID, 'ErrorField').text != "":
                 jobsfailed.append(job)
                 print(f'Job failed: {job}')
