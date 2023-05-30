@@ -8,19 +8,26 @@ from selenium.common.exceptions import NoSuchElementException
 import sys
 import json
 import string
+from datetime import datetime
+import time
 driver = webdriver.Chrome()
 wait = WebDriverWait(driver, 10)
 jobids = []
 jobsfailed = []
+now = datetime.now()
+nowdateandtime = now.strftime("%b-%d-%Y-%H-%M")
+
 
 class Session:
-    def __init__(self, name, jobssucceded, badjobs):
-        sessionname = name
-        goodjobs = jobssucceded
-        notgoodjobs = badjobs
-
-        def savejobs():
-            pass
+    def __init__(self, name, jobsattempted, badjobs):
+        self.sessionname = name
+        self.goodjobs = jobsattempted
+        self.notgoodjobs = badjobs
+    def savejobs(self):
+        with open(f'{self.sessionname}-jobs attempted', "w") as file:
+            file.write(json.dumps(self.goodjobs))
+        with open(f'{self.sessionname}-jobs failed', "w") as file:
+            file.write(json.dumps(self.notgoodjobs))
 
 
 def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, omit=None):
@@ -104,8 +111,12 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
             driver.find_element(By.NAME, "b1").click()
             driver.switch_to.default_content()
             wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[3]')))
-            wait.until(EC.presence_of_element_located((By.ID, 'ErrorField')))
-            if driver.find_element(By.ID, 'ErrorField').text != "":
+            wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]')))
+            time.sleep(3)
+            print(driver.find_element(By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]').text)
+            if driver.find_element(By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]').text is None:
+                pass
+            else:
                 jobsfailed.append(job)
                 print(f'Job failed: {job}')
                 windows = driver.window_handles
@@ -114,16 +125,16 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
             driver.switch_to.default_content()
             try:  # see if error submitting
                 if len(jobsfailed) == 0:
-                    driver.find_element(By.CLASS_NAME, (("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
-                    element = driver.find_elements(By.CLASS_NAME, (("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
+                    driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                    element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
                     jobsfailed.append(job)
                     print(f'Job failed: {job}')
                     windows = driver.window_handles
                     driver.switch_to.window(windows[1])
                     return job
                 else:
-                    driver.find_element(By.CLASS_NAME, (("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
-                    element = driver.find_elements(By.CLASS_NAME, (("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
+                    driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                    element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
                     driver.find_element(element[len(jobsfailed)-1])
                     jobsfailed.append(job)
                     print(f'Job failed: {job}')
@@ -206,20 +217,16 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
                         driver.switch_to.default_content()
                         try:  # see if error submitting
                             if len(jobsfailed) == 0:
-                                driver.find_element(By.CLASS_NAME, (
-                                    "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable"))
-                                element = driver.find_elements(By.CLASS_NAME, ((
-                                    "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
+                                driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                                element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
                                 jobsfailed.append(job)
                                 print(f'Job failed: {job}')
                                 windows = driver.window_handles
                                 driver.switch_to.window(windows[1])
                                 return job
                             else:
-                                driver.find_element(By.CLASS_NAME, (
-                                    "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable"))
-                                element = driver.find_elements(By.CLASS_NAME, ((
-                                    "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
+                                driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                                element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
                                 driver.find_element(element[len(jobsfailed) - 1])
                                 jobsfailed.append(job)
                                 print(f'Job failed: {job}')
@@ -293,16 +300,16 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
                 driver.switch_to.default_content()
                 try:  # see if error submitting
                     if len(jobsfailed) == 0:
-                        driver.find_element(By.CLASS_NAME, ("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable"))
-                        element = driver.find_elements(By.CLASS_NAME, (("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
+                        driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                        element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
                         jobsfailed.append(job)
                         print(f'Job failed: {job}')
                         windows = driver.window_handles
                         driver.switch_to.window(windows[1])
                         return job
                     else:
-                        driver.find_element(By.CLASS_NAME, ("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable"))
-                        element = driver.find_elements(By.CLASS_NAME, (("ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")))
+                        driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                        element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
                         driver.find_element(element[len(jobsfailed)-1])
                         jobsfailed.append(job)
                         print(f'Job failed: {job}')
@@ -380,17 +387,36 @@ def main():
                 jobids.append(placeholderstring)
                 iterations += 1
     print(jobids)
-    print(windownames)
+    print(jobsfailed)
+    saveresult = Session(nowdateandtime, jobids, jobsfailed)
+    saveresult.savejobs()
     input()
 
 
 if __name__ == '__main__':
-    TerminalID = 'M2LDAZ'
-    UserID = ""
-    FriendID = 'SACKEYAN'
-    EquipID = 'C128T'
-    Timestart = "0730"
-    Timeend = "0930"
-    CorrectiveAction = "asdadasdasasd"
-    jobstoautomate = ["634", "642"]
+    TerminalID = input("Enter the Terminal ID!")
+    UserID = input("Enter your User ID!")
+    FriendID = input("Enter your coworkers ID!")
+    EquipID = input("Enter the equipment ID!")
+    Timestart = input("Enter the start Time!")
+    Timeend = input("Enter the end Time!")
+    CorrectiveAction = input("Enter the corrective action")
+    jobstoautomate = []
+    amountofjobs = 0
+    while True:
+        try:
+            amountofjobs = int(input("How many jobs do you want to automate?"))
+            break
+        except ValueError:
+            print("Wrong Value. Enter an integer!")
+            continue
+    i = 0
+    while i < amountofjobs:
+        try:
+            append = str(int(input("Enter the TO number that you want to automate!")))
+            jobstoautomate.append(append)
+            i += 1
+        except ValueError:
+            print("Wrong Value. Enter an integer!")
+            continue
     main()
