@@ -1,4 +1,3 @@
-import unittest
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.keys import Keys
@@ -12,7 +11,7 @@ from datetime import datetime
 import time
 driver = webdriver.Chrome()
 wait = WebDriverWait(driver, 10)
-jobids = []
+jobids = {}
 jobsfailed = []
 now = datetime.now()
 nowdateandtime = now.strftime("%b-%d-%Y-%H-%M")
@@ -40,111 +39,104 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
         windows = driver.window_handles
         driver.switch_to.window(windows[2])
         wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/form/span/pre/a')))
-        try:
-            driver.find_element(By.XPATH, '/html/body/form/span/pre/a[2]')
-            driver.close()
-            windows = driver.window_handles
-            driver.switch_to.window(windows[1])
-            print(f'{tonumber} has a double link!')
-            return "a"
-        except NoSuchElementException:
-            element = driver.find_element(By.XPATH, '/html/body/form/span/pre/a')
-            element.click()
-            element = driver.find_element(By.XPATH, '/html/body/form/span/pre')
-        if f'-{tonumber}' in element.text:
-            starting_point = element.text.find("SCHEDULED") + 10
-            iterable = 0
-            while True:
-                character = element.text[starting_point+iterable]
-                if character in string.digits:
-                    iterable += 1
-                else:
-                    jobidee = iterable + starting_point
-                    job = element.text[starting_point:jobidee]
-                    break
-            driver.close()
-            windows = driver.window_handles
-            driver.switch_to.window(windows[0])
-            wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[2]')))
-            try:   # time start
-                driver.find_element(By.NAME, 'R7_C29_L4_N').is_displayed()
-                driver.find_element(By.NAME, 'R7_C29_L4_N').send_keys(Timestart)
-            except NoSuchElementException:
-                wait.until(EC.element_to_be_clickable((By.NAME, 'R9_C33_L4_N')))
-                driver.find_element(By.NAME, 'R9_C33_L4_N').send_keys(Timestart)
-            try:  # time end
-                driver.find_element(By.NAME, 'R9_C45_L4_N').send_keys(Timeend)
-            except NoSuchElementException:
-                driver.find_element(By.NAME, 'R7_C42_L4_N').send_keys(Timeend)
-            try:  # type maintenance # type maintenance
-                element = driver.find_element(By.NAME, 'R12_C18_L60_N')
-                elementval = element.get_property("value")
-                if "PRE-DEPLOYMENT INSPECTION" in elementval or "POST DEPLOYMENT INSPECTION" in elementval:
-                    driver.find_element(By.NAME, 'R7_C1_L1_N').send_keys("S")
-                else:
-                    driver.find_element(By.NAME, 'R7_C1_L1_N').send_keys("T")
-            except NoSuchElementException:
-                pass
-            driver.find_element(By.NAME, 'cs').send_keys("2")  # crew size
-            try:  # units produced
-                driver.find_element(By.NAME, 'R7_C25_L2_N').send_keys("1")
-            except NoSuchElementException:
-                driver.find_element(By.NAME, 'R9_C30_L2_N').send_keys("1")
-            driver.find_element(By.NAME, 'cat').send_keys("1")  # category
-            try:  # corrected by
-                if driver.find_element(By.NAME, 'R7_C62_L12_N').is_enabled():
-                    driver.find_element(By.NAME, 'R7_C62_L12_N').send_keys(FriendID)
-            except NoSuchElementException:
-                if driver.find_element(By.NAME, 'R9_C61_L12_N').is_enabled():
-                    driver.find_element(By.NAME, 'R9_C61_L12_N').send_keys(FriendID)
-            try:  # inspected by
-                driver.find_element(By.NAME, 'R19_C43_L12_N').send_keys(UserID)
-            except NoSuchElementException:
-                driver.find_element(By.NAME, 'R9_C22_L12_N').send_keys(UserID)
-            element = driver.find_element(By.NAME, 'CANarrativeTextarea')  # corrective action
-            element.clear()
-            element.send_keys(CorrectiveAction)
+        element = driver.find_element(By.XPATH, '/html/body/form/span/pre')
+        if tonumber in element.text:
+            job = findtonumber(driver.find_element(By.XPATH, '/html/body/form/span/pre'))
             try:
-                driver.find_element(By.NAME, 'rad1').click()
+                driver.find_element(By.XPATH, '/html/body/form/span/pre/a[2]')
+                driver.close()
+                windows = driver.window_handles
+                driver.switch_to.window(windows[1])
+                jobsfailed.append(tonumber)
+                print(f'{tonumber} has a double link!')
+                return "a"
             except NoSuchElementException:
-                pass
-            driver.find_element(By.NAME, "b1").click()
-            driver.switch_to.default_content()
-            wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[3]')))
-            wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]')))
-            time.sleep(3)
-            print(driver.find_element(By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]').text)
-            if driver.find_element(By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]').text is None:
-                pass
-            else:
-                jobsfailed.append(job)
-                print(f'Job failed: {job}')
+                element = driver.find_element(By.XPATH, '/html/body/form/span/pre/a')
+                element.click()
+                driver.close()
                 windows = driver.window_handles
-                driver.switch_to.window(windows[1])
-                return job
-            driver.switch_to.default_content()
-            try:  # see if error submitting
-                if len(jobsfailed) == 0:
-                    driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
-                    element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
-                    jobsfailed.append(job)
-                    print(f'Job failed: {job}')
-                    windows = driver.window_handles
-                    driver.switch_to.window(windows[1])
-                    return job
+                driver.switch_to.window(windows[0])
+                wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[2]')))
+                try:   # time start
+                    driver.find_element(By.NAME, 'R7_C29_L4_N').is_displayed()
+                    driver.find_element(By.NAME, 'R7_C29_L4_N').send_keys(Timestart)
+                except NoSuchElementException:
+                    wait.until(EC.element_to_be_clickable((By.NAME, 'R9_C33_L4_N')))
+                    driver.find_element(By.NAME, 'R9_C33_L4_N').send_keys(Timestart)
+                try:  # time end
+                    driver.find_element(By.NAME, 'R9_C45_L4_N').send_keys(Timeend)
+                except NoSuchElementException:
+                    driver.find_element(By.NAME, 'R7_C42_L4_N').send_keys(Timeend)
+                try:  # type maintenance # type maintenance
+                    element = driver.find_element(By.NAME, 'R12_C18_L60_N')
+                    elementval = element.get_property("value")
+                    if "PRE-DEPLOYMENT INSPECTION" in elementval or "POST DEPLOYMENT INSPECTION" in elementval:
+                        driver.find_element(By.NAME, 'R7_C1_L1_N').send_keys("S")
+                    else:
+                        driver.find_element(By.NAME, 'R7_C1_L1_N').send_keys("T")
+                except NoSuchElementException:
+                    pass
+                driver.find_element(By.NAME, 'cs').send_keys("2")  # crew size
+                try:  # units produced
+                    driver.find_element(By.NAME, 'R7_C25_L2_N').send_keys("1")
+                except NoSuchElementException:
+                    driver.find_element(By.NAME, 'R9_C30_L2_N').send_keys("1")
+                driver.find_element(By.NAME, 'cat').send_keys("1")  # category
+                try:  # corrected by
+                    if driver.find_element(By.NAME, 'R7_C62_L12_N').is_enabled():
+                        driver.find_element(By.NAME, 'R7_C62_L12_N').send_keys(FriendID)
+                except NoSuchElementException:
+                    if driver.find_element(By.NAME, 'R9_C61_L12_N').is_enabled():
+                        driver.find_element(By.NAME, 'R9_C61_L12_N').send_keys(FriendID)
+                try:  # inspected by
+                    driver.find_element(By.NAME, 'R19_C43_L12_N').send_keys(UserID)
+                except NoSuchElementException:
+                    driver.find_element(By.NAME, 'R9_C22_L12_N').send_keys(UserID)
+                element = driver.find_element(By.NAME, 'CANarrativeTextarea')  # corrective action
+                element.clear()
+                element.send_keys(CorrectiveAction)
+                try:
+                    driver.find_element(By.NAME, 'rad1').click()
+                except NoSuchElementException:
+                    pass
+                driver.find_element(By.NAME, "b1").click()
+                driver.switch_to.default_content()
+                wait.until(EC.frame_to_be_available_and_switch_to_it((By.XPATH, '/html/body/div[1]/iframe[3]')))
+                wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]')))
+                time.sleep(3)
+                element = driver.find_element(By.XPATH, '/html/body/div/form/div/table[1]/tbody/tr[1]/td[1]')
+                print(element.text)
+                if element.text != "" or element.text == "&nbsp":
+                    pass
                 else:
-                    driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
-                    element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
-                    driver.find_element(element[len(jobsfailed)-1])
                     jobsfailed.append(job)
                     print(f'Job failed: {job}')
                     windows = driver.window_handles
                     driver.switch_to.window(windows[1])
                     return job
-            except (NoSuchElementException, IndexError):
-                windows = driver.window_handles
-                driver.switch_to.window(windows[1])
-                return job
+                driver.switch_to.default_content()
+                try:  # see if error submitting
+                    if len(jobsfailed) == 0:
+                        driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                        element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                        jobsfailed.append(job)
+                        print(f'Job failed: {job}')
+                        windows = driver.window_handles
+                        driver.switch_to.window(windows[1])
+                        return job
+                    else:
+                        driver.find_element(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                        element = driver.find_elements(By.CLASS_NAME, "ui-dialog imdsalert ui-widget ui-widget-content ui-front ui-dialog-buttons ui-draggable")
+                        driver.find_element(element[len(jobsfailed)-1])
+                        jobsfailed.append(job)
+                        print(f'Job failed: {job}')
+                        windows = driver.window_handles
+                        driver.switch_to.window(windows[1])
+                        return job
+                except (NoSuchElementException, IndexError):
+                    windows = driver.window_handles
+                    driver.switch_to.window(windows[1])
+                    return job
         elif rapidfire is True:
             if omit is not None:
                 for TO in omit:
@@ -155,19 +147,7 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
                         driver.switch_to.window(windows[1])
                         return "a"
                     else:
-                        if "STARTED" in element.text:
-                            starting_point = element.text.find("STARTED") + 8
-                        else:
-                            starting_point = element.text.find("SCHEDULED") + 10
-                        iterable = 0
-                        while True:
-                            character = element.text[starting_point + iterable]
-                            if character in string.digits:
-                                iterable += 1
-                            else:
-                                jobidee = iterable + starting_point
-                                job = element.text[starting_point:jobidee]
-                                break
+                        job = findtonumber(element)
                         driver.close()
                         windows = driver.window_handles
                         driver.switch_to.window(windows[0])
@@ -330,6 +310,28 @@ def jobcloser(htmlele, tonumber="123456789123456789", *args, rapidfire=False, om
         return "a"
 
 
+def findtonumber(elyment):
+    if "SCHEDULED" in elyment.text:
+        starting_point = elyment.text.find("SCHEDULED") + 10
+        iterable = 0
+        while True:
+            character = elyment.text[starting_point+iterable]
+            if character in string.digits:
+                iterable += 1
+            else:
+                jobidee = iterable + starting_point
+                return elyment.text[starting_point:jobidee]
+    else:
+        starting_point = elyment.text.find("STARTED") + 10
+        iterable = 0
+        while True:
+            character = elyment.text[starting_point+iterable]
+            if character in string.digits:
+                iterable += 1
+            else:
+                jobidee = iterable + starting_point
+                return elyment.text[starting_point:jobidee]
+
 def main():
     driver.get("https://imds.cce.af.mil/imds/fs/fs000cams.html")
     windownames = driver.window_handles
@@ -384,7 +386,7 @@ def main():
         else:
             placeholderstring = jobcloser(eluhment, jobstoautomate[iterations])
             if placeholderstring.isdigit():
-                jobids.append(placeholderstring)
+                jobids[jobstoautomate[iterations]] = placeholderstring
                 iterations += 1
     print(jobids)
     print(jobsfailed)
